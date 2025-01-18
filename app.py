@@ -52,4 +52,4 @@ def logout_page():
     ui.navigate.to('/login')
 
 # Start the NiceGUI app
-ui.run(storage_secret="my-secret-key", title="HM Dashboard")
+ui.run(storage_secret="my-secret-key", title="HM Dashboard", port=8090)
