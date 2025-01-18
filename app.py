@@ -45,5 +45,11 @@ def login_page():
             username_input.value, password_input.value
         )).props('unelevated')
 
+@ui.page('/logout')
+def logout_page():
+    app.storage.user.clear()
+    ui.notify('You have been logged out.', color='positive')
+    ui.navigate.to('/login')
+
 # Start the NiceGUI app
 ui.run(storage_secret="my-secret-key", title="HM Dashboard")

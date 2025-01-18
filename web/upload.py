@@ -3,9 +3,12 @@ from data import crud
 import pandas as pd
 import adif_io
 
+from web.side_menu import create_side_menu
 
 @ui.page('/upload')
 async def page_upload():
+    create_side_menu(selected_page='upload') 
+
     user = app.storage.user
     if not user:
         ui.notify("Please log in to access the upload page.", color="negative")

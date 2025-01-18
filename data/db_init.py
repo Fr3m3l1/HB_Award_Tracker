@@ -63,12 +63,20 @@ def init_db():
         CREATE INDEX IF NOT EXISTS user_id_index ON qsos (user_id)
     ''')
 
-    hashed_password = bcrypt.hashpw('PQK0cbk@bpu4uez2kat'.encode(), bcrypt.gensalt())
+    crypt_salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw('PQK0cbk@bpu4uez2kat'.encode(), crypt_salt)
 
     # Create a user if it does not exist
     if not data.execute('SELECT * FROM users WHERE username = ?', ('fr3m3l@gmail.com',)).fetchone():
         data.execute(f'''
             INSERT INTO users (id, username, password) VALUES (1, 'fr3m3l@gmail.com', '{hashed_password.decode()}')
+        ''')
+
+    hashed_password = bcrypt.hashpw('1234'.encode(), crypt_salt)
+
+    if not data.execute('SELECT * FROM users WHERE username = ?', ('Ernst',)).fetchone():
+        data.execute(f'''
+            INSERT INTO users (id, username, password) VALUES (2, 'Ernst', '{hashed_password.decode()}')
         ''')
 
     # Commit the transaction
