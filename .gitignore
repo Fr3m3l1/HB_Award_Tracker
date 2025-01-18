@@ -1,5 +1,7 @@
 #personal
 test/*
+.nicegui/*
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
