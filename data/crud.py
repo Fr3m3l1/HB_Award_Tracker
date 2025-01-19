@@ -107,11 +107,13 @@ async def load_awards(user_id):
     return awards
 
 # Save an award for a user
-async def save_award(user_id, name, query):
+async def save_award(user_id, name, query, filter, count=0, start_date=None, end_date=None, query_text=None):
     # Save the award to the database
     # Mage db connection
     data = db.connect('data/db/database.db')
     cursor = data.cursor()
+
+    print(f"Query Text: {query_text}")
 
     # Get the max id from the database
     cursor.execute('SELECT MAX(id) FROM awards')
@@ -119,9 +121,9 @@ async def save_award(user_id, name, query):
     id = id + 1 if id else 1
 
     cursor.execute('''
-        INSERT INTO awards (id, user_id, award_name, award_query)
-        VALUES (?, ?, ?, ?)
-    ''', (id, user_id, name, query))
+        INSERT INTO awards (id, user_id, award_name, award_query, award_query_text, award_filter, award_count, award_start_date, award_end_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (id, user_id, name, query, query_text, filter, count, start_date, end_date))
     data.commit()
     cursor.close()
     data.close()
@@ -159,7 +161,7 @@ async def delete_award(award_id):
     log.info(f"Deleted award {award_id}")
 
 
-def create_query(user_id, grouping=None, counter="DXCC"):
+def create_query(user_id, grouping=None, counter="DXCC", filter=None, filter_query=None):
     """
     Creates an SQL query to count unique DXCC values based on specified groupings.
 
@@ -180,7 +182,7 @@ def create_query(user_id, grouping=None, counter="DXCC"):
         ValueError: If an invalid grouping value is provided.
     """
 
-    valid_groupings = ['BAND', 'MODE']
+    valid_groupings = ['BAND', 'MODE', 'COUNTRY']
 
     # Decode the grouping parameter and create the query
     split_grouping = grouping.split(',')
@@ -189,7 +191,8 @@ def create_query(user_id, grouping=None, counter="DXCC"):
         # remove any whitespace
         grouping = [item.strip() for item in grouping]
 
-    if grouping is None:
+    if grouping == "":
+        grouping = None
         # Count unique DXCC overall (no grouping)
         query = f"SELECT COUNT(DISTINCT {counter}) AS total_unique_dxcc FROM qsos WHERE user_id = {user_id}"
 
@@ -200,7 +203,7 @@ def create_query(user_id, grouping=None, counter="DXCC"):
                 {grouping}, 
                 COUNT(DISTINCT {counter}) AS unique_dxcc_per_{grouping}
             FROM qsos 
-            WHERE user_id = {user_id}
+            WHERE user_id = {user_id} {f" AND {filter_query}" if filter_query else ""}
             GROUP BY {grouping}
             """
 
@@ -212,7 +215,7 @@ def create_query(user_id, grouping=None, counter="DXCC"):
                 {grouping[1]}, 
                 COUNT(DISTINCT {counter}) AS unique_dxcc_per_{grouping[0]}_{grouping[1]}
             FROM qsos 
-            WHERE user_id = {user_id}
+            WHERE user_id = {user_id} {f" AND {filter_query}" if filter_query else ""}
             GROUP BY {grouping[0]}, {grouping[1]}
             """
 
@@ -227,9 +230,11 @@ def create_query(user_id, grouping=None, counter="DXCC"):
     return [query, grouping]
 
 # Get the results of an award query
-async def get_award_query_results(user_id, query):
+async def get_award_query_results(user_id, query, filter_query=None):
 
-    query, columns = create_query(user_id, query)
+    query, columns = create_query(user_id, query, filter_query=filter_query)
+
+    print(f"Query: {query}")
 
     # Query the database for the results of an award query
     # Return the data as a list of dictionaries
@@ -245,3 +250,19 @@ async def get_award_query_results(user_id, query):
     cursor.close()
     data.close()
     return [results, columns]
+
+async def get_country_list(user_id):
+    # Query the database for the user's awards
+    # Return the data as a list of dictionaries
+    # Mage db connection
+    data = db.connect('data/db/database.db')
+    cursor = data.cursor()
+    #Sort the countries by name
+    cursor.execute('''
+        SELECT DISTINCT COUNTRY FROM qsos WHERE user_id = ?
+        ORDER BY COUNTRY
+    ''', (user_id,))
+    countries = cursor.fetchall()
+    cursor.close()
+    data.close()
+    return countries

@@ -25,8 +25,9 @@ async def page_upload():
             required_columns = ["CALL", "BAND", "MODE", "CONT", "COUNTRY", "FREQ", "DISTANCE", "EMAIL", "EQSL_QSLRDATE", "EQSL_QSLSDATE", "LOTW_QSLRDATE", "LOTW_QSLSDATE", "QSLRDATE", "QSLSDATE", "GRIDSQUARE", "LAT", "LON", "ANT_AZ", "ANT_EL", "DXCC", "FORCE_INIT", "K_INDEX", "PFX", "QSO_COMPLETE", "QSO_RANDOM", "RST_RCVD", "RST_SENT", "RX_PWR", "SFI", "STATION_CALLSIGN", "SWL", "TX_PWR", "QSO_DATE", "TIME_ON", "TIME_OFF"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
-                ui.notify(f"Invalid ADI format. Missing columns: {', '.join(missing_columns)}", type="error")
-                return
+                # append None to the df for missing columns
+                for col in missing_columns:
+                    df[col] = None
             
             # Remove any extra columns
             df = df[required_columns]

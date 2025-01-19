@@ -69,7 +69,12 @@ def init_db():
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             award_name TEXT NOT NULL,
-            award_query TEXT
+            award_query TEXT,
+            award_query_text TEXT,
+            award_count INTEGER DEFAULT 0,
+            award_filter TEXT,
+            award_start_date TEXT,
+            award_end_date TEXT
         )
     ''')
 
