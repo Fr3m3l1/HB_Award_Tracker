@@ -2,14 +2,16 @@
 FROM python:3.11-slim
 
 # Set the working directory in the container
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copy the requirements file to the container
+COPY requirements.txt ./
 
-RUN pip install --upgrade pip
-# Install any needed dependencies specified in requirements.txt
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run the Python script when the container launches
+# Copy the entire project into the container
+COPY . .
+
+# Command to run your application
 CMD ["python", "app.py"]
