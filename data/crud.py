@@ -234,8 +234,6 @@ async def get_award_query_results(user_id, query, filter_query=None):
 
     query, columns = create_query(user_id, query, filter_query=filter_query)
 
-    print(f"Query: {query}")
-
     # Query the database for the results of an award query
     # Return the data as a list of dictionaries
     # Mage db connection

@@ -4,9 +4,8 @@ from web.side_menu import create_side_menu
 import pandas as pd
 
 
-def create_table(data, columns):
+def create_table(data, columns, threshold):
     df = pd.DataFrame(data, columns=columns)
-
     if len(columns) == 3:
         # Create pivot table
         matrix_df = df.pivot(
@@ -18,13 +17,55 @@ def create_table(data, columns):
         matrix_df.reset_index(inplace=True)
         matrix_df = matrix_df.rename(columns={matrix_df.columns[0]: ""})
 
+        # Prepare the columns for ui.table
+        ui_columns = [{"name": col, "label": col, "field": col} for col in matrix_df.columns]
+
+        # Prepare the rows data
+        rows = []
+        for _, row in matrix_df.iterrows():
+            row_data = row.to_dict()  # Convert each row to a dictionary
+            rows.append(row_data)
+
         # Generate UI table
-        award_table = ui.table.from_pandas(matrix_df).props("flat bordered")
-        return award_table
+        table = ui.table(columns=ui_columns, rows=rows)
+
+        column_names = matrix_df.columns.tolist()
+        
+        # Add custom slot for styling values based on the threshold
+        for col in column_names:
+            if col != "":
+                table.add_slot(f'body-cell-{col}', '''
+                    <q-td key="count" :props="props">
+                        <q-badge :color="props.value > ''' + str(threshold) +''' ? 'green' : 'grey'">
+                            {{ props.value }}
+                        </q-badge>
+                    </q-td>
+                ''')
+        
+        return table
 
     else:
-        # Default table creation
-        return ui.table.from_pandas(df).props("flat bordered")
+        # Default table creation for non-pivot data
+        ui_columns = [{"name": col, "label": col, "field": col} for col in df.columns]
+
+        # Prepare the rows data
+        rows = []
+        for _, row in df.iterrows():
+            row_data = row.to_dict()  # Convert each row to a dictionary
+            rows.append(row_data)
+
+        table = ui.table(columns=ui_columns, rows=rows)
+        
+        # Add custom slot for styling values based on the threshold
+        table.add_slot('body-cell-Count', '''
+            <q-td key="count" :props="props">
+                <q-badge :color="props.value > ''' + str(threshold) +''' ? 'green' : 'grey'">
+                    {{ props.value }}
+                </q-badge>
+            </q-td>
+        ''')
+
+        return table
 
 
 # Create the awards page with a side menu
@@ -107,11 +148,15 @@ async def page_awards():
         print("Selected Countries:", selected_countries)
 
         query_text = None
+        country_query = None
 
         # Add selected countries to the query string if applicable
         if "COUNTRY" in award_query_value and selected_countries:
             # write a sql query to filter the selected countries
-            country_query = f"COUNTRY IN {tuple(selected_countries)}"
+            if len(selected_countries) == 1:
+                country_query = f"COUNTRY = '{selected_countries[0]}'"
+            else:
+                country_query = f"COUNTRY IN {tuple(selected_countries)}"
             if query_text:
                 query_text += f" AND {country_query}"
             else:
@@ -140,7 +185,6 @@ async def page_awards():
         all_awards = await crud.load_awards(user_id=user["id"])
         if all_awards:
             for award in all_awards:
-                print(award)
                 (
                     found_connections,
                     columns,
@@ -149,14 +193,16 @@ async def page_awards():
                 )
                 with awards_container:
                     with ui.card().classes("w-full"):
-                        ui.markdown(f"### {award[2]}").classes("mb-2")
-                        ui.markdown(f"Query: {award[3]}").classes("mb-2")
-                        ui.markdown(f"Filter: {award[5]}").classes("mb-2")
+                        ui.markdown(f"### {award[2]}").classes("mb-1")
+                        ui.markdown(f"Query: {award[3]}").classes("mb-1")
+                        ui.markdown(f"Query Text: {award[4]}").classes("mb-1")
+                        ui.markdown(f"Filter: {award[6]}").classes("mb-1")
+                        ui.markdown(f"Count: {award[5]}").classes("mb-1")
                         if columns != None:
                             columns.append("Count")
                         else:
                             columns = ["Count"]
-                        create_table(found_connections, columns)
+                        create_table(found_connections, columns, award[5])
                         ui.button(
                             "Delete",
                             on_click=lambda award_id=award[0]: delete_award(award_id),

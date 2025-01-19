@@ -32,6 +32,9 @@ async def page_upload():
             # Remove any extra columns
             df = df[required_columns]
 
+            # Make the BAND column to lowercase
+            df['BAND'] = df['BAND'].str.lower()
+
             # Save to database using crud.save_qsos
             await crud.save_qsos(user['id'], df)
 
