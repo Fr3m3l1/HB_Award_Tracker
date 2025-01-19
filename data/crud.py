@@ -27,13 +27,15 @@ async def get_user(username) -> dict:
     return user
 
 # Retrieve QSO data for a user
-async def get_qsos(user_id) -> pd.DataFrame:
+async def get_qsos(user_id, offset=None, limit=None) -> pd.DataFrame:
     # Query the database for the user's QSO data
     # Return the data as a list of dictionaries
     # Mage db connection
     data = db.connect('data/db/database.db')
     cursor = data.cursor()
     cursor.execute('SELECT * FROM qsos WHERE user_id = ?', (user_id,))
+    if limit:
+        cursor.execute('SELECT * FROM qsos WHERE user_id = ? LIMIT ? OFFSET ?', (user_id, limit, offset))
     qsos = cursor.fetchall()
     cursor.close()
     data.close()

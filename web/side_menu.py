@@ -14,13 +14,16 @@ def create_side_menu(selected_page=None):
             {'page': 'home', 'label': 'Home', 'icon': 'home'},
             {'page': 'upload', 'label': 'Upload', 'icon': 'cloud_upload'},
             {'page': 'data_view', 'label': 'Data View', 'icon': 'view_in_ar'},
+            {'page': 'awards', 'label': 'Awards', 'icon': 'emoji_events'},
             {'page': 'logout', 'label': 'Logout', 'icon': 'logout'},
         ]
 
         for item in menu_items:
             if selected_page == item['page']:
-                # Apply a selected style to the active link
-                ui.link(item['label'], f'/{item["page"]}').props('class=selected p-4 flex items-center text-white bg-blue-700 rounded-md')
+                with ui.row():
+                    ui.icon(item["icon"])
+                    ui.link(item['label'], f'/{item["page"]}').props('class=flex items-center text-white bg-blue-700 rounded-md')
             else:
-                # Regular menu item style
-                ui.link(item['label'], f'/{item["page"]}').props('class=p-4 flex items-center text-white hover:bg-blue-600 rounded-md')
+                with ui.row():
+                    ui.icon(item["icon"])
+                    ui.link(item['label'], f'/{item["page"]}').props('class=flex items-center text-white bg-blue-600 rounded-md')

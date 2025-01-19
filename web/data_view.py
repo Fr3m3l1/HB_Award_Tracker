@@ -1,6 +1,5 @@
 from nicegui import ui, app
 from data import crud
-from typing import Dict
 
 from web.side_menu import create_side_menu
 
@@ -11,48 +10,100 @@ async def page_data_view():
     # Retrieve the user's QSO data from the database
     user = app.storage.user
     if user:
-        qsos = await crud.get_qsos(user_id=user['id'])  
+        # Initial page size and starting point for data
+        page_size = 10
+        current_page = 0
+        all_qsos_loaded = False
+        loaded_qsos = []
 
-        # Drop the user_id column
-        qsos = qsos.drop(columns=['user_id', 'id'])
+        # Drop columns you don't need initially
+        drop_columns = ['user_id', 'id']
+        hidden_columns = ['EMAIL', 'ANT_AZ', 'ANT_EL', 'DXCC', 'FORCE_INIT', 
+                          'K_INDEX', 'QSO_RANDOM', 'RX_PWR', 'SFI', 
+                          'TX_PWR', 'LAT', 'LON']
 
-        # Convert DataFrame columns (Index) to a list
-        qsos_dict = qsos.to_dict('records')
-        qsos_columns = qsos.columns.tolist()  # Convert to list
+        async def fetch_qsos(page: int):
+            """Fetch a specific page of QSOs."""
+            nonlocal all_qsos_loaded
+            offset = page * page_size
+            qsos = await crud.get_qsos(user_id=user['id'], offset=offset, limit=page_size)
+            
+            if len(qsos) < page_size:
+                all_qsos_loaded = True
+            
+            # Drop unwanted columns and convert to dictionary
+            qsos = qsos.drop(columns=drop_columns)
+            return qsos.to_dict('records')
 
-        columns = []
+        async def load_more_data():
+            """Load more data and refresh the table."""
+            nonlocal current_page, loaded_qsos
+            new_qsos = await fetch_qsos(current_page)
+            loaded_qsos.extend(new_qsos)
+            current_page += 1
+            data_view.refresh()
+            show_loaded_count.refresh()
 
-        for column in qsos_columns:
-            columns.append({'name': column, 'label': column, 'field': column, 'required': True, 'align': 'left'})
+        # Fetch the first page of QSOs
+        loaded_qsos = await fetch_qsos(current_page)
+        current_page += 1
 
-        # Store column visibility state
-        visibility_state = {column['field']: True for column in columns}
+        # Set up table columns
+        qsos_columns = loaded_qsos[0].keys() if loaded_qsos else []
+        visibility_state = {col: col not in hidden_columns for col in qsos_columns}
+        columns = [{'name': col, 'label': col, 'field': col, 'required': True, 'align': 'left'}
+                   for col in qsos_columns]
 
-        def toggle(column: Dict, visible: bool) -> None:
-            visibility_state[column['field']] = visible
-            qso_table.update()  # Update table to reflect changes
+        def toggle(column_field: str, visible: bool) -> None:
+            visibility_state[column_field] = visible
+            data_view.refresh()
 
         # Show the row count
-        ui.label(f"Total QSOs: {len(qsos)}")
+        @ui.refreshable
+        async def show_loaded_count():
+            total_qsos = await crud.get_qsos(user_id=user['id'])
+            ui.label(f"Loaded QSOs: {len(loaded_qsos)}/{len(total_qsos)}")
 
         with ui.button(icon='menu'):
             with ui.menu(), ui.column().classes('gap-0 p-2'):
                 for column in columns:
-                    if column['field'] not in ['EMAIL', 'ANT_AZ', 'ANT_EL', 'DXCC', 'FORCE_INIT', 'K_INDEX', 'QSO_RANDOM', 'RX_PWR', 'SFI', 'TX_PWR', 'LAT', 'LON']:
-                        ui.switch(column['label'], value=True, on_change=lambda e, column=column: toggle(column, e.value))
-                    else:
-                        ui.switch(column['field'], value=False, on_change=lambda e, column=column: toggle(column, e.value))
+                    initial_value = visibility_state[column['field']]
+                    ui.switch(
+                        column['label'],
+                        value=initial_value,
+                        on_change=lambda e, column_field=column['field']: toggle(column_field, e.value)
+                    )
 
-        with ui.card():
-            if qsos_dict:
-                qso_table = ui.table(columns=columns, rows=qsos_dict)
-                # Set initial visibility of columns based on `visibility_state`
-                for column in columns:
-                    if not visibility_state[column['field']]:
-                        column['classes'] = 'hidden'
-                        column['headerClasses'] = 'hidden'
+        @ui.refreshable
+        def data_view():
+            with ui.card():
+                if loaded_qsos:
+                    qso_table = ui.table(columns=columns, rows=loaded_qsos)
+
+                    # Adjust column visibility dynamically
+                    for column in columns:
+                        if not visibility_state[column['field']]:
+                            column['classes'] = 'hidden'
+                            column['headerClasses'] = 'hidden'
+                        else:
+                            column['classes'] = ''
+                            column['headerClasses'] = ''
+                else:
+                    ui.label('No data to display.')
+
+        await show_loaded_count()
+        data_view()
+
+        # Add a "Load More" button if there are more rows to fetch
+        async def handle_load_more_click():
+            if not all_qsos_loaded:
+                await load_more_data()
             else:
-                ui.label('No data to display.')
+                ui.notify('All QSOs are loaded.')
+
+        with ui.row():
+            load_more_button = ui.button('Load More', on_click=handle_load_more_click)
+
     else:
         ui.label('Please log in to view your data.')
         ui.link('Login', '/login')

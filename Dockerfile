@@ -11,8 +11,5 @@ RUN pip install --upgrade pip
 # Install any needed dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 8080 available to the world outside this container (optional)
-EXPOSE 8090
-
 # Run the Python script when the container launches
 CMD ["python", "app.py"]
