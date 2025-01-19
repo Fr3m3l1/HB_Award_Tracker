@@ -25,7 +25,7 @@ async def page_upload():
             required_columns = ["CALL", "BAND", "MODE", "CONT", "COUNTRY", "FREQ", "DISTANCE", "EMAIL", "EQSL_QSLRDATE", "EQSL_QSLSDATE", "LOTW_QSLRDATE", "LOTW_QSLSDATE", "QSLRDATE", "QSLSDATE", "GRIDSQUARE", "LAT", "LON", "ANT_AZ", "ANT_EL", "DXCC", "FORCE_INIT", "K_INDEX", "PFX", "QSO_COMPLETE", "QSO_RANDOM", "RST_RCVD", "RST_SENT", "RX_PWR", "SFI", "STATION_CALLSIGN", "SWL", "TX_PWR", "QSO_DATE", "TIME_ON", "TIME_OFF"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
-                ui.notify(f"Invalid CSV format. Missing columns: {', '.join(missing_columns)}", type="error")
+                ui.notify(f"Invalid ADI format. Missing columns: {', '.join(missing_columns)}", type="error")
                 return
             
             # Remove any extra columns
@@ -37,8 +37,8 @@ async def page_upload():
             ui.notify(f"Successfully uploaded {len(df)} QSOs!", type="positive")
             ui.navigate.to('/data_view')
         except Exception as e:
-            ui.notify(f"Error processing CSV: {e}", type="error")
+            ui.notify(f"Error processing ADI: {e}", type="error")
 
     with ui.card().classes('max-w-lg mx-auto mt-20'):
-        ui.label('Upload your QSO data as a CSV file').classes('text-lg mb-4')
+        ui.label('Upload your QSO data as a ADI file').classes('text-lg mb-4')
         ui.upload(on_upload=upload_file, multiple=False).props('accept=".ADI"')

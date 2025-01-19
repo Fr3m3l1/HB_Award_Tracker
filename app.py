@@ -8,6 +8,7 @@ import os
 import web.home
 import web.upload
 import web.data_view
+import web.awards
 
 load_dotenv()
 

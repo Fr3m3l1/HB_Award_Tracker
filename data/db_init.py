@@ -63,6 +63,21 @@ def init_db():
         CREATE INDEX IF NOT EXISTS user_id_index ON qsos (user_id)
     ''')
 
+    # Create the awards table with autoincrementing id
+    data.execute('''
+        CREATE TABLE IF NOT EXISTS awards (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            award_name TEXT NOT NULL,
+            award_query TEXT
+        )
+    ''')
+
+    # Create an index on the user_id column
+    data.execute('''
+        CREATE INDEX IF NOT EXISTS user_id_awards_index ON awards (user_id)
+    ''')
+
     crypt_salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw('PQK0cbk@bpu4uez2kat'.encode(), crypt_salt)
 
