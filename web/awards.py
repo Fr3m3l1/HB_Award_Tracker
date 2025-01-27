@@ -192,17 +192,42 @@ async def page_awards():
                     user_id=user["id"], query=award[3], filter_query=award[4]
                 )
                 with awards_container:
+                    # Check if any connections were found with more or equal than the minimum count
+                    if found_connections:
+                        awarded_connections = []
+                        for connection in found_connections:
+                            if int(connection[-1]) >= award[5]:
+                                awarded_connections.append(connection)
+
                     with ui.card().classes("w-full"):
                         ui.markdown(f"### {award[2]}").classes("mb-1")
+                        if awarded_connections:
+                            ui.markdown(f"You have earned this award! 🎉").classes("mb-1")
+                        else:
+                            ui.markdown(f"You have not earned this award yet.").classes("mb-1")
                         ui.markdown(f"Query: {award[3]}").classes("mb-1")
-                        ui.markdown(f"Query Text: {award[4]}").classes("mb-1")
-                        ui.markdown(f"Filter: {award[6]}").classes("mb-1")
-                        ui.markdown(f"Count: {award[5]}").classes("mb-1")
+
+                    
+                        if awarded_connections:
+                            # Display the awarded connections 
+                            with ui.expansion("Awarded Connections"):
+                                for connection in awarded_connections:
+                                    ui.markdown(f"Connection: {connection}").classes("mb-1")
+
+                        # Display the award details in an expansion panel
+                        with ui.expansion("Details"):
+                            if award[4]:
+                                ui.markdown(f"Query Text: {award[4]}").classes("mb-1")
+                            if award[5]:
+                                ui.markdown(f"Count: {award[5]}").classes("mb-1")
+                            if award[6]:
+                                ui.markdown(f"Filter: {award[6]}").classes("mb-1")
                         if columns != None:
                             columns.append("Count")
                         else:
                             columns = ["Count"]
-                        create_table(found_connections, columns, award[5])
+                        with ui.expansion("Tabelle"):
+                            create_table(found_connections, columns, award[5])
                         ui.button(
                             "Delete",
                             on_click=lambda award_id=award[0]: delete_award(award_id),

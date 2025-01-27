@@ -231,7 +231,7 @@ def create_query(user_id, grouping=None, counter="DXCC", filter=None, filter_que
     return [query, grouping]
 
 # Get the results of an award query
-async def get_award_query_results(user_id, query, filter_query=None):
+async def get_award_query_results(user_id, query, filter_query=None, has_overall=True):
 
     query, columns = create_query(user_id, query, filter_query=filter_query)
 
