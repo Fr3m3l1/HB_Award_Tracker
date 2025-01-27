@@ -88,6 +88,7 @@ async def save_qsos(user_id, df):
         log.info(f"Saved {len(df)} QSOs for user {user_id}")
     except Exception as e:
         print(f"Error saving QSOs: {e}")
+        raise e
     data.close()
 
 
