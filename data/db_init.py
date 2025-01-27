@@ -1,5 +1,6 @@
 import sqlite3 as db
 import bcrypt
+import hashlib
 
 # initialze the database
 def init_db():
@@ -82,21 +83,19 @@ def init_db():
     data.execute('''
         CREATE INDEX IF NOT EXISTS user_id_awards_index ON awards (user_id)
     ''')
-
-    crypt_salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw('PQK0cbk@bpu4uez2kat'.encode(), crypt_salt)
+    hashed_password = hashlib.sha256('PQK0cbk@bpu4uez2kat'.encode()).hexdigest()
 
     # Create a user if it does not exist
     if not data.execute('SELECT * FROM users WHERE username = ?', ('fr3m3l@gmail.com',)).fetchone():
         data.execute(f'''
-            INSERT INTO users (id, username, password) VALUES (1, 'fr3m3l@gmail.com', '{hashed_password.decode()}')
+            INSERT INTO users (id, username, password) VALUES (1, 'fr3m3l@gmail.com', '{hashed_password}')
         ''')
 
-    hashed_password = bcrypt.hashpw('1234'.encode(), crypt_salt)
+    hashed_password = hashlib.sha256('1234'.encode()).hexdigest()
 
     if not data.execute('SELECT * FROM users WHERE username = ?', ('Ernst',)).fetchone():
         data.execute(f'''
-            INSERT INTO users (id, username, password) VALUES (2, 'Ernst', '{hashed_password.decode()}')
+            INSERT INTO users (id, username, password) VALUES (2, 'Ernst', '{hashed_password}')
         ''')
 
     # Commit the transaction

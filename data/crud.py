@@ -9,7 +9,8 @@ async def authenticate_user(username, password) -> dict:
     user = await get_user(username)
     if user:
         # Verify the password
-        if bcrypt.checkpw(password.encode(), user[2].encode()):
+        print(f"User: {user}")
+        if user[2] == password:
             return user
     return None
 
