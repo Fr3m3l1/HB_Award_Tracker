@@ -31,8 +31,11 @@ def create_side_menu(selected_page=None):
         # Drawer Header
         with ui.column().classes('items-center p-4 mb-4'):
             ui.icon('account_circle', size='xl').classes('text-white')
-            ui.label(f'Welcome Back, {user["username"]}!').classes('text-white text-lg font-medium')
-        
+            if user:
+                ui.label(f'Welcome Back, {user["username"]}!').classes('text-white text-lg font-medium')
+            else:
+                ui.label('Welcome!').classes('text-white text-lg font-medium')
+
         # Navigation Menu
         menu_items = [
             {'page': 'home', 'label': 'Dashboard', 'icon': 'dashboard'},
